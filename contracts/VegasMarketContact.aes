@@ -485,6 +485,9 @@ payable contract VegasMarketContact =
             Chain.event(ReceiveReward(Call.caller, user_amount, market.total_amount))
             user_amount
 
+    
+    
+    
     stateful function
         oracle_spend : ((address * int), int, int) => unit
         oracle_spend((a, c), amount,length) =
@@ -501,10 +504,16 @@ payable contract VegasMarketContact =
             put(state {aggregator_user[account]= name})
             account
 
-    function
-        calculate_amount : (int, int) => int
-        calculate_amount (amount, proportion) =
-            amount / 10000 * proportion
+    //删除法官用户
+    stateful entrypoint
+        delete_aggregator_user:(address) => bool
+        delete_aggregator_user (addr) =
+            protocol_restrict()
+            put(state {aggregator_user = Map.delete(addr,state.aggregator_user)})
+            true
+
+
+   
 
     /**
      * 获取预测已经有几个人提供了结果
@@ -666,8 +675,60 @@ payable contract VegasMarketContact =
                         None => false
                 None => false
 
+  //获取法官用户
+    entrypoint
+        get_aggregator_user:() => map(address, string)
+        get_aggregator_user () =
+            state.aggregator_user
 
 
+
+
+    //获取法官提供的结果
+    entrypoint
+        get_oracle_market_record:(string) => map(address, int)
+        get_oracle_market_record (market_id) =
+            switch(Map.lookup(market_id, state.oracle_market_record))
+                    Some(market_record_user) => market_record_user
+                    None => {}
+
+
+    /**
+     * 获取交易记录数据
+     */
+    entrypoint
+        get_market_records : (address) => list(market_rocord)
+        get_market_records(addr) =
+            switch(Map.lookup(addr, state.markets_record))
+                Some(records) => records
+                None => []
+
+    /**
+     * 获取交易记录数据大小
+     */
+    entrypoint
+        get_market_records_size : (address) => int
+        get_market_records_size(addr) =
+            switch(Map.lookup(addr, state.markets_record))
+                Some(records) => List.length(records)
+                None => 0
+
+
+    //获取配置信息
+    entrypoint
+        get_config:() => config
+        get_config () =
+            state.config
+
+    entrypoint
+        get_state:()=>state
+        get_state () =
+            state
+
+    function
+        calculate_amount : (int, int) => int
+        calculate_amount (amount, proportion) =
+            amount / 10000 * proportion
 
     /**
      * 检测是否有重复的预测
@@ -702,26 +763,6 @@ payable contract VegasMarketContact =
             if(state.owner == Call.caller) 1
             else 0
 
-
-    /**
-     * 获取交易记录数据
-     */
-    entrypoint
-        get_market_records : (address) => list(market_rocord)
-        get_market_records(addr) =
-            switch(Map.lookup(addr, state.markets_record))
-                Some(records) => records
-                None => []
-
-    /**
-     * 获取交易记录数据大小
-     */
-    entrypoint
-        get_market_records_size : (address) => int
-        get_market_records_size(addr) =
-            switch(Map.lookup(addr, state.markets_record))
-                Some(records) => List.length(records)
-                None => 0
 
     /**
      * 获取具体预测的答案
@@ -775,43 +816,7 @@ payable contract VegasMarketContact =
                         most_of_(most, counts', xs)
 
 
-    //获取法官用户
-    entrypoint
-        get_aggregator_user:() => map(address, string)
-        get_aggregator_user () =
-            state.aggregator_user
-
-
-    //删除法官用户
-    stateful entrypoint
-        delete_aggregator_user:(address) => bool
-        delete_aggregator_user (addr) =
-            protocol_restrict()
-            put(state {aggregator_user = Map.delete(addr,state.aggregator_user)})
-            true
-
-
-    //获取法官提供的结果
-    entrypoint
-        get_oracle_market_record:(string) => map(address, int)
-        get_oracle_market_record (market_id) =
-            switch(Map.lookup(market_id, state.oracle_market_record))
-                    Some(market_record_user) => market_record_user
-                    None => {}
-
-
-
-    //获取配置信息
-    entrypoint
-        get_config:() => config
-        get_config () =
-            state.config
-
-    entrypoint
-        get_state:()=>state
-        get_state () =
-            state
-
+  
 
 
 
