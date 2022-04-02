@@ -200,7 +200,7 @@ payable contract VegasMarketContact =
             require(over_height =< state.config.market_max_height ,"Over time more than max required")
             require(min_amount =< state.config.market_max_amount ,"Market max amount error")
             require(min_amount >= state.config.market_min_amount ,"Market min amount error")
-            require(String.length(content) < 500, "Market conent length > 200 character")
+            require(String.length(content) =< 500, "Market conent length > 500 character")
 
 
 

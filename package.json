@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "This is the default package.json generated for your project",
   "scripts": {
-    "test": "mocha ./test/**/*.js --timeout 0 --exit"
+    "test": "mocha ./test/createMarket.js --timeout 0 --exit",
+    "test2": "mocha ./test/**/*.js --timeout 0 --exit"
   },
   "dependencies": {
     "@aeternity/aepp-sdk": "^11.0.0"
