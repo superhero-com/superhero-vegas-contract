@@ -59,6 +59,8 @@ payable contract VegasMarketContact =
         //
         certificate                 : map(string, address),
         certificate_people          : map(address, string),
+        all_count                   : int,
+        all_amount                  : int,
         //配置文件
         config                      : config}
 
@@ -152,6 +154,16 @@ payable contract VegasMarketContact =
         //选择答案的次数
         count    : int}
 
+
+    record market_detail = {
+        market                         : market,
+        is_oracle_market_record        : bool,
+        is_user_markets_record         : bool,
+        get_user_markets_record_result : int,
+        is_user_markets_receive_record : bool,
+        get_oracle_market_record       : map(address, int),
+        get_aggregator_user            : map(address, string)}
+
     stateful entrypoint
         init : () => state
         init () =
@@ -169,6 +181,8 @@ payable contract VegasMarketContact =
               aggregator_user             = {},
               certificate                 = {},
               certificate_people          = {},
+              all_count                   = 0,
+              all_amount                  = 0,
               config                      = {
                     decimals              = decimals,
                     oracle_trigger_count  = 3,
@@ -186,14 +200,6 @@ payable contract VegasMarketContact =
                     max_market_put_count  = 5}}
 
 
-    /**
-     * 发布一个预测，只有聚合器用户才可以发布 status=(0) 的预测
-     * - content: 主题
-     * - source_url: 获取结果的地址
-     * - min_amount: 最小支付数量
-     * - over_time: 结束时间戳，从当前时间开始相加
-     * - answers: 答案结果
-     */
     stateful entrypoint
         add_market : (string, string, int, int, list(answer)) => market
         add_market (content, source_url, min_amount, over_height, answers) =
@@ -206,7 +212,7 @@ payable contract VegasMarketContact =
             //内容限制
             require(String.length(content) =< 500, "Market conent length > 500 character")
             require(String.length(source_url) =< 100, "Market source_url length > 100 character")
-            require(Map.size(get_markets_start(Call.caller)) =< 15, "Market count length > 15")
+            require(Map.size(get_markets_start(Call.caller,true)) =< 15, "Market count length > 15")
              //验证答案的次数不等于默认状态抛出错误
             List.foreach(answers, (item) => require(item.count == 0 && String.length(item.content) < 20 ,"Answer count error or conent length > 20"))
 
@@ -237,7 +243,7 @@ payable contract VegasMarketContact =
                 market_type    = market_type}
             put(state {markets[Call.caller = {}][market_id] = market})
             put(state {markets_start[Call.caller = {}][market_id] = market})
-
+            put(state {all_count @n = n + 1})
             if(market_type == 1)
                 put(state {oracle_market_count[market_id] = 0})
                 put(state {oracle_market[market.market_id] = []})
@@ -247,12 +253,7 @@ payable contract VegasMarketContact =
 
 
 
-    /**
-     * 用户提交问题
-     * - address: 发布的用户
-     * - string: 预测id
-     * - int: 第几个答案
-     */
+    //用户提交问题
     payable stateful entrypoint
         submit_answer : (address,string,int) => bool
         submit_answer (market_address,market_id,answer_index) =
@@ -310,12 +311,12 @@ payable contract VegasMarketContact =
                 let market_records = List.insert_at(0, market_rocord, records)
                 put(state{ markets_record[Call.caller] = market_records})
 
+            put(state {all_amount @n = n + market.min_amount / state.config.decimals})
+
             Chain.event(SubmitAnswerEvent(market_address, market_id, Call.caller, answer_index))
             true
 
-    /**
-     * 收集数据，提供结果
-     */
+    //收集数据，提供结果
     stateful entrypoint
         provide_answer : (address,string,int) =>bool
         provide_answer (market_address,market_id,market_index) =
@@ -343,19 +344,14 @@ payable contract VegasMarketContact =
             put(state{oracle_market_record[market_id = {}][Call.caller] = market_index})
             //保存预测结果数据次数
             put(state{oracle_market_count[market_id = 0] @ n = n + 1})
-
+            
             if(get_oracle_market_provide_count(market_id) >= state.config.oracle_trigger_count && is_repeat(state.oracle_market[market_id]))
                 update_market_progress_to_over(market_address,market_id)
 
             true
 
 
-   /**
-     * 更新预测到下一步，更改完后的状态用结束状态，领取奖金，
-     * 同时也插入等待中的预测，便于UI展示
-     * - address: 发布的用户
-     * - string: 预测id
-     */
+    //公共预测.更改完后的状态用结束状态，之后才可以领取奖金
     stateful function
         update_market_progress_to_over : (address,string)=>unit
         update_market_progress_to_over (market_address,market_id) =
@@ -385,12 +381,8 @@ payable contract VegasMarketContact =
 
 
 
-    /**
-     * 私有预测更新到下一步，更改完后的状态用结束状态，领取奖金，
-     * 同时也插入等待中的预测，便于UI展示
-     * - address: 发布的用户
-     * - string: 预测id
-     */
+    
+    //私有预测更新到下一步，更改完后的状态用结束状态，领取奖金，
     stateful entrypoint
         private_update_market_progress_to_over : (address,string,int)=>bool
         private_update_market_progress_to_over (market_address,market_id,result_index) =
@@ -414,16 +406,12 @@ payable contract VegasMarketContact =
             put(state {markets[market_address][market_id].progress = 2})
             //计算哪个投票最多，然后设置最终结果
             put(state {markets[market_address][market_id].result = result_index})
-
-
-
             true
 
 
 
-    /**
-     * 领取奖金，
-     */
+
+    //领取奖金
     stateful entrypoint
         receive_reward : (address,string)=>int
         receive_reward (market_address,market_id) =
@@ -470,17 +458,7 @@ payable contract VegasMarketContact =
             user_amount
 
 
-
-
-    stateful function
-        oracle_spend : ((address * int), int, int) => unit
-        oracle_spend((a, c), amount,length) =
-            Chain.spend(a, calculate_amount(amount, state.config.create_percentage / length))
-
-
-
-
-
+    //添加证书
     stateful entrypoint
         add_certificate : (string) => unit
         add_certificate(name) =
@@ -493,7 +471,7 @@ payable contract VegasMarketContact =
                 None =>
                     abort("Name not find")
 
-
+    //删除证书
     stateful entrypoint
         delete_certificate:(string) => bool
         delete_certificate (name) =
@@ -501,7 +479,7 @@ payable contract VegasMarketContact =
             put(state {certificate = Map.delete(name,state.certificate)})
             true
 
-
+    //添加法官
     stateful entrypoint
         add_aggregator_user : (address,string) => address
         add_aggregator_user(account,name) =
@@ -509,7 +487,7 @@ payable contract VegasMarketContact =
             put(state {aggregator_user[account]= name})
             account
 
-    //删除法官用户
+    //删除法官
     stateful entrypoint
         delete_aggregator_user:(address) => bool
         delete_aggregator_user (addr) =
@@ -517,16 +495,73 @@ payable contract VegasMarketContact =
             put(state {aggregator_user = Map.delete(addr,state.aggregator_user)})
             true
 
-
-    //删除法官用户
+    //更换合约归属者
     stateful entrypoint
         chagne_owner:(address) => address
         chagne_owner (addr) =
             protocol_restrict()
             put(state {owner = addr})
             addr
+    
+    stateful entrypoint 
+        update_config:(config) => config
+        update_config(config) = 
+            protocol_restrict()
+            put(state{config = config})
+            config
 
 
+
+
+    //============================================================
+
+
+    entrypoint
+        get_markets_start : (address,bool) => map(string, market)
+        get_markets_start(market_address,is_private) =
+            if(is_private)
+                switch(Map.lookup(market_address, state.markets_start))
+                    Some(market_map) => market_map
+                    None => {}
+            else
+                switch(Map.lookup(state.owner, state.markets_start))
+                    Some(market_map) => Map.from_list(List.filter((item) => is_market_start(item),  Map.to_list(market_map) ))
+                    None => {}
+ 
+    entrypoint
+        get_markets_referee : () => map(string, market)
+        get_markets_referee() =
+            switch(Map.lookup(state.owner, state.markets_start))
+                Some(market_map) =>     
+                    let items = Map.to_list(market_map)
+                    Map.from_list(List.filter((item) => is_market_referee(item), items ))
+                    
+                None => {}
+ 
+
+
+    entrypoint
+        get_market_detail : (address,string) => market_detail
+        get_market_detail(market_address, market_id) =
+            { market                         = get_market(market_address,market_id),
+              is_oracle_market_record        = is_oracle_market_record(market_id),
+              is_user_markets_record         = is_user_markets_record(market_address, market_id),
+              get_user_markets_record_result = get_user_markets_record_result(market_address, market_id),
+              is_user_markets_receive_record = is_user_markets_receive_record(market_address, market_id),
+              get_oracle_market_record       = get_oracle_market_record(market_id),
+              get_aggregator_user            = get_aggregator_user()}
+            
+
+    
+    entrypoint
+        get_all_count : ()  => int
+        get_all_count () =
+            state.all_count
+
+    entrypoint
+        get_all_amount : ()  => int
+        get_all_amount () =
+            state.all_amount
 
 
     /**
@@ -536,22 +571,6 @@ payable contract VegasMarketContact =
         get_oracle_market_provide_count : (string) => int
         get_oracle_market_provide_count (market_id) =
             state.oracle_market_count[market_id]
-
-
-
-
-
-    /**
-     * 获取公共具体预测
-     * - market_address: 发布者的地址
-     * - market_id: 发布者的具体预测
-     */
-    entrypoint
-        get_market_public : (address) => map(string, market)
-        get_market_public(market_address) =
-            switch(Map.lookup(market_address, state.markets))
-                Some(market_map) => market_map
-                None => abort("Dnt find the market")
 
     /**
      * 获取具体预测
@@ -631,16 +650,31 @@ payable contract VegasMarketContact =
                         None => {}
                 None => {}
 
-    /**
-     * 获取进行中的预测
-     */
-    entrypoint
-        get_markets_start : (address) => map(string, market)
-        get_markets_start(market_address) =
-            switch(Map.lookup(market_address, state.markets_start))
-                Some(market_map) =>
-                    market_map
-                None => {}
+    
+
+
+
+
+
+    
+
+    function
+        is_market_start : ((string * market)) => bool
+        is_market_start((market_id, market)) =
+            if(market.over_height >= Chain.block_height)
+                true
+            else 
+                false
+  
+
+    function
+        is_market_referee : ((string * market)) => bool
+        is_market_referee((market_id, market)) =
+            if(Chain.block_height > market.over_height)
+                true
+            else 
+                false
+
 
     /**
      * 获取进行中的预测数量
@@ -656,7 +690,7 @@ payable contract VegasMarketContact =
 
 
     /**
-     * 管理员是否投票过
+     * 是否投票过
      */
     entrypoint
         is_oracle_market_record : (string) => bool
@@ -746,6 +780,12 @@ payable contract VegasMarketContact =
                     put(state {certificate_people[owner] = name})
 
 
+    stateful function
+        oracle_spend : ((address * int), int, int) => unit
+        oracle_spend((a, c), amount,length) =
+            Chain.spend(a, calculate_amount(amount, state.config.create_percentage / length))
+
+    //计算分红
     function
         calculate_amount : (int, int) => int
         calculate_amount (amount, proportion) =
@@ -753,8 +793,6 @@ payable contract VegasMarketContact =
 
     /**
      * 检测是否有重复的预测
-     * - market_address: 发布者的地址
-     * - market_id: 发布者的具体预测
      */
     function
         restrict_repeat_market : (address,string) => bool
@@ -784,11 +822,6 @@ payable contract VegasMarketContact =
             if(state.owner == Call.caller) 1
             else 0
 
-
-
-
-
-
     /**
      * 获取具体预测的答案
      */
@@ -801,24 +834,21 @@ payable contract VegasMarketContact =
                         Some(market) =>  List.get(answer_index, market.answers)
                         None => abort("This option was not found")
                 None => abort("This option was not found")
-    /**
-     * 当前调用者是否是合约归属者
-     */
+
+
     function
         protocol_restrict : () => unit
         protocol_restrict() =
             require(Call.caller == state.owner, "PROTOCOL_RESTRICTED")
 
-    /**
-     * 生成预测ID
-     */
+
     function
         generate_market_id : () => string
         generate_market_id() =
-             Bytes.to_str(Crypto.sha256(String.concat(Address.to_str(Call.caller), Int.to_str(Chain.timestamp))))
+             Bytes.to_str(Crypto.sha256(String.concat(Address.to_str(Call.caller), Int.to_str(Chain.timestamp)))) 
 
 
-    //获取最多投票的结果
+
     function
         most_of : (list('a)) => 'a
         most_of((x :: xs) ) =
