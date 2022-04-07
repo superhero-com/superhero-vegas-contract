@@ -63,10 +63,4 @@ describe('VegasMarketContact', () => {
     })
 
 
-    it('AensMarketContract: get_markets_start', async () => {
-        const {decodedResult: get_state} = await contract.methods.get_markets_start(wallets[0].publicKey);
-        console.dir(get_state.markets.get(owner).get(marketId), {depth: null});
-    });
-
-
 });

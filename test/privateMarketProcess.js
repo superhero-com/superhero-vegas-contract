@@ -8,7 +8,7 @@ describe('VegasMarketContact', () => {
     let contract;
     let owner;
     let marketId;
-
+    let name = "abcdefghijklmnopqrstuvwxyz.chain";
     before(async () => {
         aeSdk = await utils.getSdk();
 
@@ -31,12 +31,20 @@ describe('VegasMarketContact', () => {
         await utils.rollbackSnapshot(aeSdk);
     });
 
-    it('VegasMarketContact: AddAggregator', async () => {
-        for (let i = 0; i < 5; i++) {
-            let {decodedResult} = await contract.methods.add_aggregator_user(wallets[i].publicKey, "Account_" + i);
-            assert.equal(decodedResult, wallets[i].publicKey);
-        }
+    it('ClaimName: ' + name, async () => {
+        const preClaim = await aeSdk.aensPreclaim(name, {
+            onAccount: wallets[1].publicKey,
+
+        });
+        await preClaim.claim({
+            onAccount: wallets[1].publicKey,
+
+        });
     })
+
+    it('AensMarketContract: addCertificate', async () => {
+        await contract.methods.add_certificate(name);
+    });
 
     it('VegasMarketContact: AddMarket', async () => {
         let content = "Qatar World Cup & The first round On November 21 🇸🇳Senegal VS 🇳🇱Holland, Who will win! ";
@@ -56,7 +64,11 @@ describe('VegasMarketContact', () => {
             }, {
                 content: "Special results",
                 count: 0,
-            }]);
+            }],
+            {
+                onAccount: wallets[1].publicKey,
+
+            });
         owner = decodedEvents[0].args[0];
         marketId = decodedEvents[0].args[1];
         console.log("           owner______________________________ " + owner);
@@ -102,38 +114,21 @@ describe('VegasMarketContact', () => {
             await SubmitAnswer(answerIndex, minAmount, i);
         }
     });
-    //
-    // it('AensMarketContract: UpdateMarketProgressToWait', async () => {
-    //     await utils.awaitKeyBlocks(aeSdk, 20)
-    //     const {decodedResult: get_state} = await contract.methods.update_market_progress_to_wait(owner, marketId);
-    // });
 
-    it('VegasMarketContact: ProvideAnswer', async () => {
+    it('AensMarketContract: PrivateUpdateMarketProgressToOver', async () => {
         await utils.awaitKeyBlocks(aeSdk, 20)
-        for (let i = 0; i < 5; i++) {
-            let {decodedResult: market} = await contract.methods.get_market(owner, marketId);
-            let result = parseInt(market.result);
-            if (result > -1) {
-                assert.ok(true);
-                return;
-            }
-            let {decodedResult} = await contract.methods.provide_answer(
-                owner,
-                marketId,
-                i < 1 ? 0 : 1,
-                {
-                    onAccount: wallets[i].publicKey
-                });
-            assert.ok(decodedResult);
-        }
-    })
+        const {decodedResult: get_state} = await contract.methods.private_update_market_progress_to_over(
+            owner,
+            marketId,
+            1,
+            {
+                onAccount: wallets[1].publicKey
+            });
+    });
 
-    // it('AensMarketContract: UpdateMarketProgressToOver', async () => {
-    //     await contract.methods.update_market_progress_to_over(owner, marketId);
-    // });
 
     it('VegasMarketContact: ReceiveReward', async () => {
-        for (let i = 10; i > 5; i--) {
+        for (let i = 10; i > 7; i--) {
             await contract.methods.receive_reward(
                 owner,
                 marketId,
@@ -144,16 +139,8 @@ describe('VegasMarketContact', () => {
     });
 
 
-
-
     it('AensMarketContract: GetState', async () => {
         const {decodedResult: get_state} = await contract.methods.get_state();
-        console.dir(get_state, {depth: null});
-        // console.dir(get_state.markets.get(owner).get(marketId), {depth: null});
-    });
-
-    it('AensMarketContract: GetState', async () => {
-        const {decodedResult: get_state} = await contract.methods.is_repeat([1,2,3]);
         console.dir(get_state, {depth: null});
         // console.dir(get_state.markets.get(owner).get(marketId), {depth: null});
     });
