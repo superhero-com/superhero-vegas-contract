@@ -107,9 +107,7 @@ payable contract VegasMarketContact =
         //基金会分红百分比
         foundation_percentage : int,
         //创建者分红百分比
-        create_percentage     : int,
-        //用户最大可同时进行的预测数量
-        max_market_put_count  : int}
+        create_percentage     : int}
 
 
     record market = {
@@ -196,8 +194,7 @@ payable contract VegasMarketContact =
                     foundation_address    = ak_CNcf2oywqbgmVg3FfKdbHQJfB959wrVwqfzSpdWVKZnep7nj4,
                     platform_percentage   = 850,
                     foundation_percentage = 150,
-                    create_percentage     = 500,
-                    max_market_put_count  = 5}}
+                    create_percentage     = 500}}
 
 
     stateful entrypoint
@@ -344,7 +341,7 @@ payable contract VegasMarketContact =
             put(state{oracle_market_record[market_id = {}][Call.caller] = market_index})
             //保存预测结果数据次数
             put(state{oracle_market_count[market_id = 0] @ n = n + 1})
-            
+
             if(get_oracle_market_provide_count(market_id) >= state.config.oracle_trigger_count && is_repeat(state.oracle_market[market_id]))
                 update_market_progress_to_over(market_address,market_id)
 
@@ -381,7 +378,7 @@ payable contract VegasMarketContact =
 
 
 
-    
+
     //私有预测更新到下一步，更改完后的状态用结束状态，领取奖金，
     stateful entrypoint
         private_update_market_progress_to_over : (address,string,int)=>bool
@@ -502,10 +499,10 @@ payable contract VegasMarketContact =
             protocol_restrict()
             put(state {owner = addr})
             addr
-    
-    stateful entrypoint 
+
+    stateful entrypoint
         update_config:(config) => config
-        update_config(config) = 
+        update_config(config) =
             protocol_restrict()
             put(state{config = config})
             config
@@ -527,17 +524,17 @@ payable contract VegasMarketContact =
                 switch(Map.lookup(state.owner, state.markets_start))
                     Some(market_map) => Map.from_list(List.filter((item) => is_market_start(item),  Map.to_list(market_map) ))
                     None => {}
- 
+
     entrypoint
         get_markets_referee : () => map(string, market)
         get_markets_referee() =
             switch(Map.lookup(state.owner, state.markets_start))
-                Some(market_map) =>     
+                Some(market_map) =>
                     let items = Map.to_list(market_map)
                     Map.from_list(List.filter((item) => is_market_referee(item), items ))
-                    
+
                 None => {}
- 
+
 
 
     entrypoint
@@ -550,9 +547,9 @@ payable contract VegasMarketContact =
               is_user_markets_receive_record = is_user_markets_receive_record(market_address, market_id),
               get_oracle_market_record       = get_oracle_market_record(market_id),
               get_aggregator_user            = get_aggregator_user()}
-            
 
-    
+
+
     entrypoint
         get_all_count : ()  => int
         get_all_count () =
@@ -650,29 +647,29 @@ payable contract VegasMarketContact =
                         None => {}
                 None => {}
 
-    
 
 
 
 
 
-    
+
+
 
     function
         is_market_start : ((string * market)) => bool
         is_market_start((market_id, market)) =
             if(market.over_height >= Chain.block_height)
                 true
-            else 
+            else
                 false
-  
+
 
     function
         is_market_referee : ((string * market)) => bool
         is_market_referee((market_id, market)) =
             if(Chain.block_height > market.over_height)
                 true
-            else 
+            else
                 false
 
 
@@ -845,7 +842,7 @@ payable contract VegasMarketContact =
     function
         generate_market_id : () => string
         generate_market_id() =
-             Bytes.to_str(Crypto.sha256(String.concat(Address.to_str(Call.caller), Int.to_str(Chain.timestamp)))) 
+             Bytes.to_str(Crypto.sha256(String.concat(Address.to_str(Call.caller), Int.to_str(Chain.timestamp))))
 
 
 

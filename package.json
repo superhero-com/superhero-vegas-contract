@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "This is the default package.json generated for your project",
   "scripts": {
-    "test2": "mocha ./test/privateMarketProcess.js --timeout 0 --exit",
-    "test": "mocha ./test/publicMarketProcess.js --timeout 0 --exit",
-    "test3": "mocha ./test/createMarket.js --timeout 0 --exit",
+    "privateMarketProcess": "mocha ./test/privateMarketProcess.js --timeout 0 --exit",
+    "publicMarketProcess": "mocha ./test/publicMarketProcess.js --timeout 0 --exit",
+    "createMarket": "mocha ./test/createMarket.js --timeout 0 --exit",
+    "config": "mocha ./test/config.js --timeout 0 --exit",
     "test4": "mocha ./test/**/*.js --timeout 0 --exit"
   },
 
