@@ -29,128 +29,155 @@ payable contract VegasMarketContact =
 
 
     datatype event =
+        //Add Market Event
         AddMarketEvent(address, string)
+
+        //Submit Event
         | SubmitAnswerEvent(address, string, address, int)
-        | ReceiveReward(address, int,int)
-        | ContractBalance(int)
+
+        //Recoive Event
+        | ReceiveReward(address, int, int)
 
 
     record state = {
-        //预测的全部内容，哪个用户预测的id的预测内容(用户, map(预测id, 预测细节))，详情页可以直接使用address+id访问
+
+        //The full content of the forecast, the forecast content of the ID predicted by 
+        //which user (user, map(forecast ID, forecast details)),
+        //and the details page can be accessed directly using Address + ID
         markets                     : map(address, map(string, market)),
-        //进行中的预测，可以理解为是全部预测中的一个缓存分类，用于在首页展示和个人预测的我发起的页面展示
+
+        //The ongoing forecast can be understood as a cache classification
+        //of the total forecast for display on the home page and my initiated page display of the personal forecast
         markets_start               : map(address, map(string, market)),
-        //我参与过的预测激励，我自己参与过那个预测并且是哪个人的
+
+        //I've been involved in forecasting incentives,
+        //I've been involved in that forecasting myself and who it was
         markets_record              : map(address, list(market_rocord)),
-        //用户投票记录，用于检测当前用户是否投票过的判断，哪个账户发布的哪个预测的那个用户投票的第几个结果
+
+        //User voting records, used to detect whether the current user has voted, 
+        //which account posted which predicted which results of that user's vote
         user_markets_record         : map(address, map(string, map(address, int))),
-        //用户领奖记录，哪个账户发布的哪个预测的那个用户领取的金额
+
+        //User award records, which account published which forecast
+        //the amount of money that the user received
         user_markets_receive_record : map(address, map(string, map(address, int))),
-        //某个预测的结果合集
+       
+        //A set of predicted results
         oracle_market               : map(string, list(int)),
-         //已经预测的次数
+       
+        //The number of times that have been predicted
         oracle_market_count         : map(string, int),
-        //法官投票的记录，用于后期审查
+        
+        //Records of judges' votes for post-review purposes
         oracle_market_record        : map(string, map(address, int)),
-        //合约归属者
+       
+        //Contract owner
         owner                       : address,
-        //法官账户
+        
+        //The judge account
         aggregator_user             : map(address, string),
-        //
+
+        //Method of safety certificate
         certificate                 : map(string, address),
+
+        //Who the security certificate belongs to
         certificate_people          : map(address, string),
+
+        //Total number of predictions
         all_count                   : int,
+
+        //Total forecast amount
         all_amount                  : int,
-        //配置文件
+        
+        //config file
         config                      : config}
-
-    record market_rocord = {
-        //预言id sha256（地址+时间戳）
-        market_id        : string,
-        //预测发布者地址
-        owner            : address,
-        //内容
-        content          : string,
-        //投注了多少钱
-        amount           : int,
-        //选择的结果
-        put_result       : string,
-        //选择的结果
-        put_result_index : int,
-        //选择发生的时间
-        put_time         : int,
-        //选择发生的高度
-        put_height       : int}
-
-    record config = {
-        decimals              : int,
-        //触发预测完成的次数
-        oracle_trigger_count  : int,
-        //预测最低的时间限制
-        market_min_height     : int,
-        //预测最高的时间限制
-        market_max_height     : int,
-        //预测最低的金额限制
-        market_min_amount     : int,
-        //预测最高的金额限制
-        market_max_amount     : int,
-        //交易记录最多缓存条数
-        record_max_count      : int,
-        //预测最高的时间限制
-        market_max_people     : int,
-        //平台分红账户地址
-        platform_address      : address,
-        //基金会分红账户地址
-        foundation_address    : address,
-        //平台分红百分比
-        platform_percentage   : int,
-        //基金会分红百分比
-        foundation_percentage : int,
-        //创建者分红百分比
-        create_percentage     : int}
 
 
     record market = {
-        //预言id sha256（地址+时间戳）
+        
+        //Prediction ID SHA256 (address + timestamp)
         market_id      : string,
-        //发布者
+       
+        //Publisher owner
         owner          : address,
-        //内容，用于展示给用户的
+       
+        //Content, for presentation to the user
         content        : string,
-        //获取结果的地址，用于查看的
+        
+        //Gets the address of the result for viewing
         source_url     : string,
-        //可能产生的结果
+        
+        //Possible outcomes
         answers        : list(answer),
-        //创建的时间
+
+        //Creation time
         create_time    : int,
-        //结束的时间
+
+        //End time
         over_height    : int,
-        //最大投注人数
+
+        //Maximum number of bets
         max_people     : int,
-        //最小投注数量
+
+        //Minimum number of bets
         min_amount     : int,
-        //当前主题一共投注了多少
+
+        //How many bets have been placed on the current topic
         total_amount   : int,
-        //当前主题一共被领取了多少
+
+        //How many themes have been collected
         receive_amount : int,
-        //多少人进行了投注
+
+        //How many people have placed bets
         put_count      : int,
-        //多少人领取了奖金
+
+        //How many people received the bonus
         receive_count  : int,
-        //最终产生的结果
+
+        //The final result
         result         : int,
-        //当前属于什么进度
+
+        //What is the current schedule
         progress       : int,
-        //预测的类型
+
+        //Types of predictions
         market_type    : int}
 
 
 
     record answer = {
-        //答案的内容
+
+        //The content of the answer
         content  : string,
-        //选择答案的次数
+
+        //The number of times you choose an answer
         count    : int}
+
+
+    record market_rocord = {
+        //Prediction ID SHA256 (address + timestamp)
+        market_id        : string,
+
+        //Predict publisher address
+        owner            : address,
+
+        //topic
+        content          : string,
+
+        //The amount of money wagered
+        amount           : int,
+
+        //Result of selection Contnet
+        put_result       : string,
+
+        ///Result of selection Index
+        put_result_index : int,
+
+        //Choose when it happens
+        put_time         : int,
+
+        //Select the height at which it occurs
+        put_height       : int}
 
 
     record market_detail = {
@@ -161,6 +188,45 @@ payable contract VegasMarketContact =
         is_user_markets_receive_record : bool,
         get_oracle_market_record       : map(address, int),
         get_aggregator_user            : map(address, string)}
+
+    record config = {
+        decimals              : int,
+        //The number of times the trigger prediction has been completed
+        oracle_trigger_count  : int,
+
+        //Predict the minimum time limit
+        market_min_height     : int,
+
+        //Predict the maximum time limit
+        market_max_height     : int,
+
+        //Predict the minimum amount limit
+        market_min_amount     : int,
+
+        //Predict the maximum amount limit
+        market_max_amount     : int,
+
+        //Maximum number of cached transaction records
+        record_max_count      : int,
+
+        //Predict the maximum time limit
+        market_max_people     : int,
+
+        //Platform dividend account address
+        platform_address      : address,
+
+        //Address of the foundation's dividend sharing account
+        foundation_address    : address,
+
+        //Percentage of platform dividends
+        platform_percentage   : int,
+
+        //Foundation percentage
+        foundation_percentage : int,
+
+        //Percentage of founder's dividend
+        create_percentage     : int}
+
 
     stateful entrypoint
         init : () => state
@@ -200,27 +266,33 @@ payable contract VegasMarketContact =
     stateful entrypoint
         add_market : (string, string, int, int, list(answer)) => market
         add_market (content, source_url, min_amount, over_height, answers) =
-            //最低结束时间也要大于配置中的时间，比如大于当前时间1天和小于30天
+            //The minimum end time must be later than the configured time, for example, 1 day later than the current time or less than 30 days
             require(over_height >= state.config.market_min_height, "Over time more than min required")
             require(over_height =< state.config.market_max_height, "Over time more than max required")
-            //最大最小金额限制
+            
+            //Maximum and minimum amount limit
             require(min_amount =< state.config.market_max_amount, "Market max amount error")
             require(min_amount >= state.config.market_min_amount, "Market min amount error")
-            //内容限制
+           
+            //Content restrictions
             require(String.length(content) =< 500, "Market conent length > 500 character")
             require(String.length(source_url) =< 100, "Market source_url length > 100 character")
+
+            //Limit the number of start operations
             require(Map.size(get_markets_start(Call.caller,true)) =< 15, "Market count length > 15")
-             //验证答案的次数不等于默认状态抛出错误
+            
+            //The number of times the answer is verified does not equal the default state to throw an error
             List.foreach(answers, (item) => require(item.count == 0 && String.length(item.content) < 20 ,"Answer count error or conent length > 20"))
 
-            //生成预测ID
+            //Generate forecast ID
             let market_id = generate_market_id()
-            //检测是否有重复的id
+
+            //Check for duplicate ids
             restrict_repeat_market(Call.caller,market_id)
+
 
             let market_type = get_market_type()
 
-            //构建主题
             let market = {
                 market_id      = market_id,
                 owner          = Call.caller,
@@ -238,9 +310,11 @@ payable contract VegasMarketContact =
                 result         = -1,
                 progress       = 0,
                 market_type    = market_type}
+
             put(state {markets[Call.caller = {}][market_id] = market})
             put(state {markets_start[Call.caller = {}][market_id] = market})
             put(state {all_count @n = n + 1})
+
             if(market_type == 1)
                 put(state {oracle_market_count[market_id] = 0})
                 put(state {oracle_market[market.market_id] = []})
@@ -250,40 +324,42 @@ payable contract VegasMarketContact =
 
 
 
-    //用户提交问题
+
     payable stateful entrypoint
-        submit_answer : (address,string,int) => bool
+        submit_answer : (address, string, int) => bool
         submit_answer (market_address,market_id,answer_index) =
-            //获取预测
+
             let market = get_market(market_address,market_id)
-            //如果预测结束时间小于当前时间，提示错误
-            require(Chain.block_height =< market.over_height,"Market time out")
-            //如果当前支付数量小于预测规定的金额，提示错误
-            require(Call.value == market.min_amount,"Market amount low out")
-            //如果当前的进度不是 START状态，提示错误
-            require(market.progress == 0,"Market progress is not start")
-            //如果当前用户已经参与过提问的，提示错误
-            require(!is_user_markets_record(market_address,market_id),"User markets repeat")
-            //如果参与人到达最大限制,提示错误
-            require(market.max_people > market.put_count,"Market max people many")
-            //获取要提交的答案
+
+            //Restrictions on end time, minimum amount, progress, whether a bet has been made, and maximum number of people
+            require(Chain.block_height =< market.over_height          , "Market time out")
+            require(Call.value         == market.min_amount           , "Market amount low out")
+            require(market.progress    == 0                           , "Market progress is not start")
+            require(market.max_people  >  market.put_count            , "Market max people many")
+            require(!is_user_markets_record(market_address, market_id), "User markets repeat")
+
             let answer = get_market_answer(market_address,market_id,answer_index)
-            //构建新的答案对象，并将已投注次数+1操作
-            let new_answer  = {
-                content     = answer.content,
-                count       = answer.count + 1}
-            //将旧的答案对象替换为新的
-            let new_answers = List.replace_at(answer_index, new_answer, state.markets[market_address][market_id].answers)
-            put(state {markets[market_address][market_id].answers = new_answers})
-            //更新保存当前投注的总额
+            let new_answer = {
+                content    = answer.content,
+                count      = answer.count + 1}
+
+            //Update the contract information
+            let new_answers = List.replace_at(
+                answer_index, 
+                new_answer  , 
+                state.markets[market_address][market_id].answers)
+            
+            put(state {markets[market_address][market_id].answers         = new_answers})
             put(state {markets[market_address][market_id].total_amount @n = n + Call.value})
-            //更新投注的次数
-            put(state {markets[market_address][market_id].put_count @n = n + 1})
-            //记录当前预测已经投票
-            put(state {user_markets_record[market_address = {}][market_id  = {}][Call.caller] = answer_index})
-            //更新进行中的预测为最新状态
+            put(state {markets[market_address][market_id].put_count @n    = n + 1})
+
+            //add user markets record
+            put(state {user_markets_record[market_address = {}][market_id = {}][Call.caller] = answer_index})
+
+            //update market to start status
             put(state {markets_start[market_address = {}][market_id] = state.markets[market_address][market_id]})
 
+            //Generate betting record
             let market_rocord = {
                 market_id        = market_id,
                 owner            = market_address,
@@ -293,11 +369,9 @@ payable contract VegasMarketContact =
                 put_result_index = answer_index,
                 put_time         = Chain.timestamp,
                 put_height       = Chain.block_height}
-
-
             let records = get_market_records(Call.caller)
 
-
+            //A maximum of N items can be displayed according to the contract limit
             if(List.length(records) >= state.config.record_max_count)
                 let market_records = List.reverse(records)
                 let market_records = List.drop(List.length(market_records) - 1, market_records)
@@ -307,101 +381,78 @@ payable contract VegasMarketContact =
             else
                 let market_records = List.insert_at(0, market_rocord, records)
                 put(state{ markets_record[Call.caller] = market_records})
-
+            
+            //Update the total bet count
             put(state {all_amount @n = n + market.min_amount / state.config.decimals})
-
             Chain.event(SubmitAnswerEvent(market_address, market_id, Call.caller, answer_index))
             true
 
-    //收集数据，提供结果
+
     stateful entrypoint
         provide_answer : (address,string,int) =>bool
         provide_answer (market_address,market_id,market_index) =
-            //获取当前的预测
-            let market = get_market(market_address,market_id)
-            //如果提供的结果大于了答案的总数，提示错误
-            require(market_index < List.length(market.answers),"Index out error")
-            //如果提供的结果是负数提示错误
-            require(market_index >= 0, "Index out error 0")
-            //如果如果状态不是需要预言机的结果，提示错误
-            require(market.market_type  == 1 ,"Market type error")
-             //如果进度 不是 START状态，提示错误
-            require(market.progress == 0,"Market progress is not start")
-            //如果不是有权限的人提供结果，提示错误
-            require(is_aggregator_user(),"Aggregator error")
-            //如果没有到达预测的结束时间，提示错误
-            require(Chain.block_height > market.over_height, "Market time not out")
-            //如果当前用于已经对这个预测提供过结果，提示错误
-            require(!is_oracle_market_record(market_id),"Provide count more")
-            //插入提供的结果数据
-            let provide_data = List.insert_at(0,market_index,state.oracle_market[market_id])
-            //保存提供的结果
-            put(state{oracle_market[market_id] = provide_data})
-            //保存当前用户提供预测的结果记录
-            put(state{oracle_market_record[market_id = {}][Call.caller] = market_index})
-            //保存预测结果数据次数
-            put(state{oracle_market_count[market_id = 0] @ n = n + 1})
 
+            let market = get_market(market_address,market_id)
+
+            //Verify that the supplied data is valid
+            require(market_index       <  List.length(market.answers), "Index out error")
+            require(market_index       >= 0                          , "Index out error 0")
+            require(market.market_type == 1                          , "Market type error")
+            require(market.progress    == 0                          , "Market progress is not start")
+            require(Chain.block_height >  market.over_height         , "Market time not out")
+            
+            //Validates the provider
+            require(is_aggregator_user()               , "Aggregator error")
+            require(!is_oracle_market_record(market_id), "Provide count more")
+
+            //Generate the latest data
+            let provide_data = List.insert_at(0, market_index, state.oracle_market[market_id])
+
+            //Update contract data
+            put(state{oracle_market[market_id]                          = provide_data})
+            put(state{oracle_market_record[market_id = {}][Call.caller] = market_index})
+            put(state{oracle_market_count[market_id  = 0] @ n           = n + 1})
+
+            //Common forecast case reaches trigger condition, update to finished
             if(get_oracle_market_provide_count(market_id) >= state.config.oracle_trigger_count && is_repeat(state.oracle_market[market_id]))
-                update_market_progress_to_over(market_address,market_id)
+                //Delete the prediction in progress because it is over
+                put(state {markets_start[market_address] = Map.delete(market_id,state.markets_start[market_address])})
+            
+                //Update the status to the Ended state
+                put(state {markets[market_address][market_id].progress = 2})
+                
+                //Calculate which vote has the most votes, and then set the final result
+                let reward_num = most_of(state.oracle_market[market_id])
+                
+                //Set the final award result
+                put(state {markets[market_address][market_id].result = reward_num})
 
             true
 
 
-    //公共预测.更改完后的状态用结束状态，之后才可以领取奖金
-    stateful function
-        update_market_progress_to_over : (address,string)=>unit
-        update_market_progress_to_over (market_address,market_id) =
-            //获取当前预测
-            let market = get_market(market_address,market_id)
-            //如果没有到达预测的结束时间，提示错误
-            require(Chain.block_height > market.over_height, "Market time not out")
-            //如果如果状态不是需要预言机的结果，提示错误
-            require(market.market_type  == 1, "Market type error")
-            //如果进度 不是 START状态，提示错误
-            require(market.progress == 0,"Market progress is not start")
-            //如果没有到达预测的结束时间，提示错误
-            require(Chain.block_height > market.over_height, "Market time not out")
-            //如果提供者提供的数据不足以达到设置的标准，提示错误
-            require(get_oracle_market_provide_count(market_id) >= state.config.oracle_trigger_count, "Market provide count low")
-
-            //删除进行中的预测，因为已经进入等待状态了
-            put(state {markets_start[market_address] = Map.delete(market_id,state.markets_start[market_address])})
-            //更新状态到已结束状态
-            put(state {markets[market_address][market_id].progress = 2})
-            //计算哪个投票最多，然后设置最终结果
-            let reward_num = most_of(state.oracle_market[market_id])
-            //设置最终领奖结果
-            put(state {markets[market_address][market_id].result = reward_num})
 
 
 
-
-
-
-    //私有预测更新到下一步，更改完后的状态用结束状态，领取奖金，
     stateful entrypoint
         private_update_market_progress_to_over : (address,string,int)=>bool
         private_update_market_progress_to_over (market_address,market_id,result_index) =
-            //获取当前预测
-            let market = get_market(market_address,market_id)
-            //如果不是发布者本人调用方法，提示错误
-            require(market.owner == Call.caller, "Market time not out")
-            //如果提供的结果大于了答案的总数，提示错误
-            require(result_index < List.length(market.answers), "Index out error")
-            //如果没有到达预测的结束时间，提示错误
-            require(Chain.block_height > market.over_height, "Market time not out")
-            //如果如果状态不是需要预言机的结果，提示错误
-            require(market.market_type  == 0, "Market type error")
-            //如果进度 不是 START状态，提示错误
-            require(market.progress == 0, "Market progress is not start")
 
-            //删除进行中的预测，因为已经进入等待状态了
+            let market = get_market(market_address,market_id)
+
+            //Verify the content
+            require(market.owner        == Call.caller                , "Market time not out")
+            require(result_index        <  List.length(market.answers), "Index out error")
+            require(Chain.block_height  >  market.over_height         , "Market time not out")
+            require(market.market_type  == 0                          , "Market type error")
+            require(market.progress     == 0                          , "Market progress is not start")
+
+            //Delete the prediction in progress because it is over
             put(state {markets_start[market_address] = Map.delete(market_id,state.markets_start[market_address])})
 
-            //如果提供者提供的数据不足以达到设置的标准，提示错误
+            //Update to over
             put(state {markets[market_address][market_id].progress = 2})
-            //计算哪个投票最多，然后设置最终结果
+
+            //Update result
             put(state {markets[market_address][market_id].result = result_index})
             true
 
@@ -412,50 +463,49 @@ payable contract VegasMarketContact =
     stateful entrypoint
         receive_reward : (address,string)=>int
         receive_reward (market_address,market_id) =
-            //获取当前预测
-            let market = get_market(market_address, market_id)
-            //如果进度 不是 OVER状态，提示错误
-            require(market.progress == 2, "The game is not over yet")
-            //如果当前用户已经参与过提问的，提示错误
-            require(!is_user_markets_receive_record(market_address, market_id), "You can't double claim the bonus")
-            //如果当前用户没有参与过提问的，提示错误
-            require(is_user_markets_record(market_address ,market_id), "You didn't participate in the prediction")
-            //如果当前用户投票和最终结果不对，提示错误
-            require(market.result == get_user_markets_record_result(market_address, market_id), "Your vote does not match the final result")
-            // //获取正确的答案
-            let answer = get_market_answer(market_address, market_id,market.result)
-            // //计算应该发放的金额
+
+            let market = get_market(market_address, market_id)  
+
+            //Verification claim restriction
+            require(market.progress == 2                                                        , "The game is not over yet")
+            require(market.result   == get_user_markets_record_result(market_address, market_id), "Your vote does not match the final result")
+            require(!is_user_markets_receive_record(market_address, market_id)                  , "You can't double claim the bonus")
+            require(is_user_markets_record(market_address, market_id)                           , "You didn't participate in the prediction")
+            
+            let answer = get_market_answer(market_address, market_id, market.result)
+
+            //Calculate the amount to be claimed
             let amount = market.total_amount / answer.count
 
-
-            //设置已经领取的了多少数量
+            //Set how much has been claimed
             put(state {markets[market_address][market_id].receive_amount  @ n = n + amount})
             put(state {markets[market_address][market_id].receive_count  @ n = n + 1})
 
-
-            //分红
+            //Share out bonus
             Chain.spend(state.config.platform_address, calculate_amount(amount, state.config.platform_percentage))
             Chain.spend(state.config.foundation_address, calculate_amount(amount, state.config.foundation_percentage))
 
+            //Calculate the amount the user finally receives
             let user_amount = calculate_amount(
                 amount ,
                 (10000 - (state.config.platform_percentage + state.config.foundation_percentage +  state.config.create_percentage )))
 
-            // 记录当前预测已经领过奖
+            //Record the current forecast has received a prize
             put(state {user_markets_receive_record[market_address = {}][market_id  = {}][Call.caller] = user_amount})
 
+            //Public predictions, rewards for judges,Private predictions, reward creators
             if(market.market_type == 1)
                 let items : list(address * int)  = Map.to_list(get_oracle_market_record(market_id))
                 List.foreach(items, (item) => oracle_spend(item, amount, List.length(items)))
             else
                 Chain.spend(market.owner, calculate_amount(amount, state.config.create_percentage))
-
+            
+            //Receive user rewards
             Chain.spend(Call.caller, user_amount)
             Chain.event(ReceiveReward(Call.caller, user_amount, market.total_amount))
             user_amount
 
 
-    //添加证书
     stateful entrypoint
         add_certificate : (string) => unit
         add_certificate(name) =
@@ -468,7 +518,6 @@ payable contract VegasMarketContact =
                 None =>
                     abort("Name not find")
 
-    //删除证书
     stateful entrypoint
         delete_certificate:(string) => bool
         delete_certificate (name) =
@@ -476,7 +525,6 @@ payable contract VegasMarketContact =
             put(state {certificate = Map.delete(name,state.certificate)})
             true
 
-    //添加法官
     stateful entrypoint
         add_aggregator_user : (address,string) => address
         add_aggregator_user(account,name) =
@@ -484,7 +532,6 @@ payable contract VegasMarketContact =
             put(state {aggregator_user[account]= name})
             account
 
-    //删除法官
     stateful entrypoint
         delete_aggregator_user:(address) => bool
         delete_aggregator_user (addr) =
@@ -492,7 +539,7 @@ payable contract VegasMarketContact =
             put(state {aggregator_user = Map.delete(addr,state.aggregator_user)})
             true
 
-    //更换合约归属者
+
     stateful entrypoint
         chagne_owner:(address) => address
         chagne_owner (addr) =
@@ -510,7 +557,6 @@ payable contract VegasMarketContact =
 
 
 
-    //============================================================
 
 
     entrypoint
@@ -555,25 +601,18 @@ payable contract VegasMarketContact =
         get_all_count () =
             state.all_count
 
+
     entrypoint
         get_all_amount : ()  => int
         get_all_amount () =
             state.all_amount
 
 
-    /**
-     * 获取预测已经有几个人提供了结果
-     */
     entrypoint
         get_oracle_market_provide_count : (string) => int
         get_oracle_market_provide_count (market_id) =
             state.oracle_market_count[market_id]
 
-    /**
-     * 获取具体预测
-     * - market_address: 发布者的地址
-     * - market_id: 发布者的具体预测
-     */
     entrypoint
         get_market : (address,string) => market
         get_market(market_address,market_id) =
@@ -584,10 +623,6 @@ payable contract VegasMarketContact =
                         None => abort("Dnt find the market")
                 None => abort("Dnt find the market")
 
-
-    /**
-     * 当前用户是否领取过奖金
-     */
     entrypoint
         is_user_markets_receive_record : (address,string) => bool
         is_user_markets_receive_record(market_address,market_id) =
@@ -601,9 +636,6 @@ payable contract VegasMarketContact =
                         None => false
                 None => false
 
-    /**
-     * 当前用户是否参与过预测
-     */
     entrypoint
         is_user_markets_record : (address,string) => bool
         is_user_markets_record(market_address,market_id) =
@@ -617,10 +649,6 @@ payable contract VegasMarketContact =
                         None => false
                 None => false
 
-
-    /**
-     * 获取当前用于预测投票的结果
-     */
     entrypoint
         get_user_markets_record_result : (address,string) => int
         get_user_markets_record_result(market_address,market_id) =
@@ -634,9 +662,6 @@ payable contract VegasMarketContact =
                         None => -1
                 None => -1
 
-    /**
-     * 获取预测下面所有人参与的预测结果
-     */
     entrypoint
         get_user_markets_record : (address,string) => map(address,int)
         get_user_markets_record(market_address,market_id) =
@@ -650,32 +675,6 @@ payable contract VegasMarketContact =
 
 
 
-
-
-
-
-
-    function
-        is_market_start : ((string * market)) => bool
-        is_market_start((market_id, market)) =
-            if(market.over_height >= Chain.block_height)
-                true
-            else
-                false
-
-
-    function
-        is_market_referee : ((string * market)) => bool
-        is_market_referee((market_id, market)) =
-            if(Chain.block_height > market.over_height)
-                true
-            else
-                false
-
-
-    /**
-     * 获取进行中的预测数量
-     */
     entrypoint
         get_markets_start_size : (address) => int
         get_markets_start_size(market_address) =
@@ -685,10 +684,6 @@ payable contract VegasMarketContact =
                 None => 0
 
 
-
-    /**
-     * 是否投票过
-     */
     entrypoint
         is_oracle_market_record : (string) => bool
         is_oracle_market_record(market_id) =
@@ -699,27 +694,18 @@ payable contract VegasMarketContact =
                         None => false
                 None => false
 
-  //获取法官用户
     entrypoint
         get_aggregator_user:() => map(address, string)
         get_aggregator_user () =
             state.aggregator_user
 
-
-
-
-    //获取法官提供的结果
     entrypoint
         get_oracle_market_record:(string) => map(address, int)
         get_oracle_market_record (market_id) =
             switch(Map.lookup(market_id, state.oracle_market_record))
-                    Some(market_record_user) => market_record_user
-                    None => {}
+                Some(market_record_user) => market_record_user
+                None => {}
 
-
-    /**
-     * 获取交易记录数据
-     */
     entrypoint
         get_market_records : (address) => list(market_rocord)
         get_market_records(addr) =
@@ -727,9 +713,6 @@ payable contract VegasMarketContact =
                 Some(records) => records
                 None => []
 
-    /**
-     * 获取交易记录数据大小
-     */
     entrypoint
         get_market_records_size : (address) => int
         get_market_records_size(addr) =
@@ -737,25 +720,27 @@ payable contract VegasMarketContact =
                 Some(records) => List.length(records)
                 None => 0
 
-
-    //获取配置信息
     entrypoint
         get_config:() => config
         get_config () =
             state.config
 
-    //获取配置信息
     entrypoint
-           get_owner:() => address
-           get_owner () =
-               state.owner
+        get_owner:() => address
+        get_owner () =
+            state.owner
 
 
     entrypoint
         get_state:()=>state
         get_state () =
             state
-
+            
+    entrypoint
+        is_repeat : (list(int)) => bool
+        is_repeat((x :: xs) ) =
+            if(is_repeat_(x, {[x] = 1}, xs) == 1)false
+            else true
 
 
     stateful function
@@ -782,15 +767,29 @@ payable contract VegasMarketContact =
         oracle_spend((a, c), amount,length) =
             Chain.spend(a, calculate_amount(amount, state.config.create_percentage / length))
 
-    //计算分红
+
+    function
+        is_market_start : ((string * market)) => bool
+        is_market_start((market_id, market)) =
+            if(market.over_height >= Chain.block_height)
+                true
+            else
+                false
+
+
+    function
+        is_market_referee : ((string * market)) => bool
+        is_market_referee((market_id, market)) =
+            if(Chain.block_height > market.over_height)
+                true
+            else
+                false
+
     function
         calculate_amount : (int, int) => int
         calculate_amount (amount, proportion) =
             amount / 10000 * proportion
 
-    /**
-     * 检测是否有重复的预测
-     */
     function
         restrict_repeat_market : (address,string) => bool
         restrict_repeat_market(market_address,market_id) =
@@ -800,9 +799,7 @@ payable contract VegasMarketContact =
                         Some(market) => abort("Market ID Repeat")
                         None => true
                 None => true
-    /**
-     * 当前调用者是否属于可发布聚合器账户列表中
-     */
+
     function
         is_aggregator_user : () => bool
         is_aggregator_user() =
@@ -810,18 +807,12 @@ payable contract VegasMarketContact =
                 Some(user) => true
                 None => false
 
-    /**
-     * 当前调用者是否属于可发布聚合器账户列表中
-     */
     function
         get_market_type : () => int
         get_market_type() =
             if(state.owner == Call.caller) 1
             else 0
 
-    /**
-     * 获取具体预测的答案
-     */
     function
         get_market_answer : (address,string,int) => answer
         get_market_answer(market_address, market_id, answer_index) =
@@ -864,11 +855,6 @@ payable contract VegasMarketContact =
                     else
                         most_of_(most, counts', xs)
 
-    entrypoint
-        is_repeat : (list(int)) => bool
-        is_repeat((x :: xs) ) =
-            if(is_repeat_(x, {[x] = 1}, xs) == 1)false
-            else true
 
 
     function
