@@ -41,7 +41,7 @@ payable contract VegasMarketContact =
 
     record state = {
 
-        //The full content of the forecast, the forecast content of the ID predicted by 
+        //The full content of the forecast, the forecast content of the ID predicted by
         //which user (user, map(forecast ID, forecast details)),
         //and the details page can be accessed directly using Address + ID
         markets                     : map(address, map(string, market)),
@@ -54,26 +54,26 @@ payable contract VegasMarketContact =
         //I've been involved in that forecasting myself and who it was
         markets_record              : map(address, list(market_rocord)),
 
-        //User voting records, used to detect whether the current user has voted, 
+        //User voting records, used to detect whether the current user has voted,
         //which account posted which predicted which results of that user's vote
         user_markets_record         : map(address, map(string, map(address, int))),
 
         //User award records, which account published which forecast
         //the amount of money that the user received
         user_markets_receive_record : map(address, map(string, map(address, int))),
-       
+
         //A set of predicted results
         oracle_market               : map(string, list(int)),
-       
+
         //The number of times that have been predicted
         oracle_market_count         : map(string, int),
-        
+
         //Records of judges' votes for post-review purposes
         oracle_market_record        : map(string, map(address, int)),
-       
+
         //Contract owner
         owner                       : address,
-        
+
         //The judge account
         aggregator_user             : map(address, string),
 
@@ -88,25 +88,25 @@ payable contract VegasMarketContact =
 
         //Total forecast amount
         all_amount                  : int,
-        
+
         //config file
         config                      : config}
 
 
     record market = {
-        
+
         //Prediction ID SHA256 (address + timestamp)
         market_id      : string,
-       
+
         //Publisher owner
         owner          : address,
-       
+
         //Content, for presentation to the user
         content        : string,
-        
+
         //Gets the address of the result for viewing
         source_url     : string,
-        
+
         //Possible outcomes
         answers        : list(answer),
 
@@ -269,18 +269,18 @@ payable contract VegasMarketContact =
             //The minimum end time must be later than the configured time, for example, 1 day later than the current time or less than 30 days
             require(over_height >= state.config.market_min_height, "Over time more than min required")
             require(over_height =< state.config.market_max_height, "Over time more than max required")
-            
+
             //Maximum and minimum amount limit
             require(min_amount =< state.config.market_max_amount, "Market max amount error")
             require(min_amount >= state.config.market_min_amount, "Market min amount error")
-           
+
             //Content restrictions
             require(String.length(content) =< 500, "Market conent length > 500 character")
             require(String.length(source_url) =< 100, "Market source_url length > 100 character")
 
             //Limit the number of start operations
             require(Map.size(get_markets_start(Call.caller,true)) =< 15, "Market count length > 15")
-            
+
             //The number of times the answer is verified does not equal the default state to throw an error
             List.foreach(answers, (item) => require(item.count == 0 && String.length(item.content) < 20 ,"Answer count error or conent length > 20"))
 
@@ -345,10 +345,10 @@ payable contract VegasMarketContact =
 
             //Update the contract information
             let new_answers = List.replace_at(
-                answer_index, 
-                new_answer  , 
+                answer_index,
+                new_answer  ,
                 state.markets[market_address][market_id].answers)
-            
+
             put(state {markets[market_address][market_id].answers         = new_answers})
             put(state {markets[market_address][market_id].total_amount @n = n + Call.value})
             put(state {markets[market_address][market_id].put_count @n    = n + 1})
@@ -381,7 +381,7 @@ payable contract VegasMarketContact =
             else
                 let market_records = List.insert_at(0, market_rocord, records)
                 put(state{ markets_record[Call.caller] = market_records})
-            
+
             //Update the total bet count
             put(state {all_amount @n = n + market.min_amount / state.config.decimals})
             Chain.event(SubmitAnswerEvent(market_address, market_id, Call.caller, answer_index))
@@ -400,7 +400,7 @@ payable contract VegasMarketContact =
             require(market.market_type == 1                          , "Market type error")
             require(market.progress    == 0                          , "Market progress is not start")
             require(Chain.block_height >  market.over_height         , "Market time not out")
-            
+
             //Validates the provider
             require(is_aggregator_user()               , "Aggregator error")
             require(!is_oracle_market_record(market_id), "Provide count more")
@@ -417,13 +417,13 @@ payable contract VegasMarketContact =
             if(get_oracle_market_provide_count(market_id) >= state.config.oracle_trigger_count && is_repeat(state.oracle_market[market_id]))
                 //Delete the prediction in progress because it is over
                 put(state {markets_start[market_address] = Map.delete(market_id,state.markets_start[market_address])})
-            
+
                 //Update the status to the Ended state
                 put(state {markets[market_address][market_id].progress = 2})
-                
+
                 //Calculate which vote has the most votes, and then set the final result
                 let reward_num = most_of(state.oracle_market[market_id])
-                
+
                 //Set the final award result
                 put(state {markets[market_address][market_id].result = reward_num})
 
@@ -459,19 +459,19 @@ payable contract VegasMarketContact =
 
 
 
-    //领取奖金
+    //To receive a bonus
     stateful entrypoint
         receive_reward : (address,string)=>int
         receive_reward (market_address,market_id) =
 
-            let market = get_market(market_address, market_id)  
+            let market = get_market(market_address, market_id)
 
             //Verification claim restriction
             require(market.progress == 2                                                        , "The game is not over yet")
             require(market.result   == get_user_markets_record_result(market_address, market_id), "Your vote does not match the final result")
             require(!is_user_markets_receive_record(market_address, market_id)                  , "You can't double claim the bonus")
             require(is_user_markets_record(market_address, market_id)                           , "You didn't participate in the prediction")
-            
+
             let answer = get_market_answer(market_address, market_id, market.result)
 
             //Calculate the amount to be claimed
@@ -499,7 +499,7 @@ payable contract VegasMarketContact =
                 List.foreach(items, (item) => oracle_spend(item, amount, List.length(items)))
             else
                 Chain.spend(market.owner, calculate_amount(amount, state.config.create_percentage))
-            
+
             //Receive user rewards
             Chain.spend(Call.caller, user_amount)
             Chain.event(ReceiveReward(Call.caller, user_amount, market.total_amount))
@@ -735,7 +735,7 @@ payable contract VegasMarketContact =
         get_state:()=>state
         get_state () =
             state
-            
+
     entrypoint
         is_repeat : (list(int)) => bool
         is_repeat((x :: xs) ) =
